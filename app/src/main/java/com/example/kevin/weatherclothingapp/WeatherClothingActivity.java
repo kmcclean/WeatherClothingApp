@@ -2,48 +2,55 @@ package com.example.kevin.weatherclothingapp;
 
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.app.ListActivity;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.os.AsyncTask;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
-import android.widget.ImageView;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import java.util.ArrayList;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
+public class WeatherClothingActivity extends ListActivity {
 
-public class WeatherClothingActivity extends AppCompatActivity {
+    ListView weatherList;
+    TextView tv;
 
-    private static final String TAG = "Weather Application";
-    TextView tempTV;
-    ImageView radarImage;
-    FragmentManager fm;
-    FragmentTransaction ft;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_weather_clothing);
 
+        APICreator apic = new APICreator(this);
+        ArrayList<Bitmap> bitmapArrayList = new ArrayList<>();
+        ArrayList<String> dayList = new ArrayList<>();
+
+        //This runs for the even numbers, because that's how WeatherUnderground sets their days (odd numbers are nights).
+        for (int i = 0; i <= 6; i = i + 2) {
+            Bitmap weatherIcon = apic.getForecastIcon(i);
+            String day = apic.getForecastDay(i);
+            bitmapArrayList.add(weatherIcon);
+            dayList.add(day);
+        }
+
+
+        //sets the list Adapter.
+        CustomListAdapter adapter = new CustomListAdapter(this, dayList, bitmapArrayList);
+        weatherList = (ListView) findViewById(android.R.id.list);
+        weatherList.setAdapter(adapter);
         //TODO set the location fragment and display it.
 
         //TODO set the change clothing options fragment and display it.
 
-        fm = getFragmentManager();
-        ft = fm.beginTransaction();
-        SimpleWeatherForecastFragment swff = new SimpleWeatherForecastFragment();
-        //TODO swff should have a number pushed to it, and that should tell the program which day of the week...
-        //TODO ...that fragment should present. It should be a loop that allows it to create the appropriate number of fragments.
+        weatherList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            }
+        });
+
 
     }
 }
