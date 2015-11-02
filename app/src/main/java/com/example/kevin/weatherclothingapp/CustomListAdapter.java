@@ -48,8 +48,8 @@ public class CustomListAdapter extends ArrayAdapter<String> {
         return rowView;
     }
 
-    @Override
+    /*@Override
     public int getCount(){
         return forecastIconBMArrayList.size();
-    }
+    }*/
 }

@@ -27,8 +27,6 @@ public class SimpleWeatherForecastFragment extends ListFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        //APICreator apic = new APICreator(this);
-
         //TODO this fragment should make a request of the APICreator to the data needed for the weather data.
     }
 

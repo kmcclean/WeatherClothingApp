@@ -8,15 +8,13 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 
 public class WeatherClothingActivity extends ListActivity {
 
     ListView weatherList;
-    TextView tv;
+
 
 
     @Override
@@ -48,6 +46,15 @@ public class WeatherClothingActivity extends ListActivity {
         weatherList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                //creates fragments that show the options for the dates which have been selected by the user.
+                FragmentManager fm;
+                fm = getFragmentManager();
+                FragmentTransaction ft = fm.beginTransaction();
+                EtsyFragment ef = new EtsyFragment();
+                ft.replace(android.R.id.content, ef);
+                ft.addToBackStack(null);
+                ft.commit();
             }
         });
 
