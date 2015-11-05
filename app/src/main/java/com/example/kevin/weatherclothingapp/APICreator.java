@@ -14,6 +14,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 
 /**
  * Created by Kevin on 10/26/2015.
@@ -26,11 +27,12 @@ public class APICreator {
 
     //TODO create methods that can be used to cover repetitive code.
 
-    Bitmap weatherIcon;
-    String forecastDay;
-    Bitmap etsyImage;
+    ArrayList<Bitmap> weatherIconArrayList;
+    ArrayList<String> forecastDayArrayList;
+    ArrayList<String> etsyImageURLStringArray;
 
     private final String TAG = "APICreator Class";
+
     Activity activity;
 
     APICreator(Activity a){
@@ -38,66 +40,76 @@ public class APICreator {
     }
 
     //this gets the image from Etsy that has been selected.
-    public Bitmap getEtsyImage(){
+    public JSONObject getEtsyJSONObject(){
 
-        String etsyKey = getKeyFromRawResource("etsy_key");
-        String etsyUrl = String.format("https://openapi.etsy.com/v2/listings/active?api_key=%s&limit=1&category=clothing&fields=title,url&includes=MainImage", etsyKey);
-        etsyImage = null;
+        String etsyKey = getKeyFromRawResource("etsykey");
+        String etsyUrl = String.format("https://openapi.etsy.com/v2/listings/active?api_key=%s&limit=5&category=clothing&fields=title,url&includes=MainImage", etsyKey);
+        etsyImageURLStringArray = null;
+        JSONObject etsyJSO = null;
 
         try {
-            etsyImage = new RequestEtsyImages().execute(etsyUrl).get();
+            etsyJSO = new RequestEtsyImagesString().execute(etsyUrl).get();
+        }
+        catch (Exception e){
+            Log.e(TAG, "Unable to get String. Check getEtsyJSONObject method.", e);
+        }
+
+        return etsyJSO;
+    }
+
+
+    public Bitmap getEtsyImage(String url){
+        Bitmap bitmap = null;
+        try{
+            bitmap = new RequestImages().execute(url).get();
         }
         catch (Exception e){
             Log.e(TAG, "Unable to get Bitmap. Check getEtsyImage method.", e);
         }
-        if (etsyImage == null){
-            Log.e(TAG, "etsyImage variable in getEtsyImage method is null.");
-        }
-        return etsyImage;
+        return bitmap;
     }
 
     //returns a Bitmap of the forecast icon for the selected day.
-    public Bitmap getForecastIcon(Integer i) {
-        weatherIcon = null;
+    public ArrayList<Bitmap> getForecastIcon() {
+        weatherIconArrayList = null;
         String key = getKeyFromRawResource("key");
         String wuTempUrl = String.format("http://api.wunderground.com/api/%s/forecast/q/MN/Minneapolis.json", key);
         try{
-            weatherIcon = new RequestCurrentMplsWeatherIcon().execute(wuTempUrl, Integer.toString(i)).get();
+            weatherIconArrayList = new RequestCurrentMplsWeatherIcon().execute(wuTempUrl).get();
         }
         catch (Exception e){
             Log.e(TAG, "Unable to get Bitmap. Check getForecastIcon method.", e);
         }
-        if (weatherIcon == null){
-            Log.e(TAG, "weatherIcon variable in getForecastIcon method is null.");
+        if (weatherIconArrayList == null){
+            Log.e(TAG, "weatherIconArrayList variable in getForecastIcon method is null.");
         }
-        return weatherIcon;
+        return weatherIconArrayList;
     }
 
     //returns the selected day for the Forecast (Monday, Tuesday, etc.).
-    public String getForecastDay(Integer i) {
-        forecastDay = null;
+    public ArrayList<String> getForecastStringInfo(String string) {
+        forecastDayArrayList = null;
         String key = getKeyFromRawResource("key");
         String wuTempUrl = String.format("http://api.wunderground.com/api/%s/forecast/q/MN/Minneapolis.json", key);
+        Log.i(TAG, "The string is" + string);
         try{
-            forecastDay = new RequestMinneapolisForecastDay().execute(wuTempUrl, Integer.toString(i)).get();
+            forecastDayArrayList = new RequestMinneapolisForecastDay().execute(wuTempUrl, string).get();
         }
         catch (Exception e){
             Log.e(TAG, "Unable to get String. Check getForecastDay method.", e);
         }
-        if (forecastDay == null){
-            Log.e(TAG, "forecastDay variable in getForecastDay method is null.");
+        if (forecastDayArrayList == null){
+            Log.e(TAG, "forecastDayArrayList variable in getForecastDay method is null.");
         }
-        return forecastDay;
+        return forecastDayArrayList;
     }
 
-    class RequestEtsyImages extends AsyncTask<String, String, Bitmap> {
+    class RequestEtsyImagesString extends AsyncTask<String, String, JSONObject> {
 
         @Override
-        protected Bitmap doInBackground(String... urlInfo) {
+        protected JSONObject doInBackground(String... urlInfo) {
             String responseString;
-            String imageURL;
-            Bitmap clothesImage = null;
-
+            JSONObject response = null;
             try {
                 URL url = new URL(urlInfo[0]);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -108,35 +120,78 @@ public class APICreator {
                 while ((c = streamReader.read()) != -1) {
                     buffer.append((char) c);
                 }
-                responseString = buffer.toString();
-                JSONObject response = new JSONObject(responseString);
-                JSONArray jsa1 = response.getJSONArray("results");
-                JSONObject jso1 = jsa1.getJSONObject(0);
-                JSONObject jso2  = jso1.getJSONObject("MainImage");
-                imageURL = jso2.getString("url_75x75");
-
-                URL url2 = new URL(imageURL);
-                HttpURLConnection connection2 = (HttpURLConnection) url2.openConnection();
-                InputStream responseStream2 = connection2.getInputStream();
-                clothesImage = BitmapFactory.decodeStream(responseStream2);
-
-
+                    responseString = buffer.toString();
+                    response = new JSONObject(responseString);
 
             } catch (Exception e) {
                 Log.e(null, "Error fetching EtsyInfo", e);
             }
-            if (clothesImage == null){
-                Log.e(TAG, "clothesImage variable in RequestEtsyImages class is null.");
+            if (response == null){
+                Log.e(TAG, "response variable in RequestEtsyImagesString class is null.");
             }
-            return clothesImage;
+            return response;
         }
+    }
+
+    class RequestImages extends AsyncTask<String, String, Bitmap>{
+
+        @Override
+        protected Bitmap doInBackground(String... url){
+
+            Bitmap bitmap = getImage(url[0]);
+
+            return bitmap;
+        }
+
+    }
+
+    protected String getEtsyString(JSONObject jso, int i, String s){
+        String returnString = null;
+        try {
+            JSONArray jsa1 = jso.getJSONArray("results");
+            JSONObject jso1 = jsa1.getJSONObject(i);
+            returnString = jso1.getString(s);
+        }
+        catch (Exception e){
+            Log.e(TAG, "Error fetching Etsy String", e);
+        }
+        return returnString;
+    }
+
+
+    protected String getEtsyURLString(JSONObject jso, int i, String s){
+        String returnString = null;
+        try {
+            JSONArray jsa1 = jso.getJSONArray("results");
+            JSONObject jso1 = jsa1.getJSONObject(i);
+            JSONObject jso2 = jso1.getJSONObject("MainImage");
+            returnString = jso2.getString(s);
+        }
+        catch (Exception e){
+            Log.e(TAG, "Error fetching Etsy URL String", e);
+        }
+        return returnString;
+    }
+
+    protected Bitmap getImage(String imageURL){
+        Bitmap image = null;
+        try {
+            URL url = new URL(imageURL);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            InputStream responseStream = connection.getInputStream();
+            image = BitmapFactory.decodeStream(responseStream);
+        }
+        catch (Exception e){
+            Log.e(TAG, "Error fetching image.");
+        }
+        return image;
     }
 
     //gets the key from the raw file.
     private String getKeyFromRawResource(String requestedKey) {
         InputStream keyStream = null;
-        if (requestedKey.equals("etsy_key")){
-            keyStream = activity.getResources().openRawResource(R.raw.etsy_key);
+        if (requestedKey.equals("etsykey")){
+            keyStream = activity.getResources().openRawResource(R.raw.etsykey);
         }
         else if (requestedKey.equals("key")) {
             keyStream = activity.getResources().openRawResource(R.raw.key);
@@ -154,79 +209,83 @@ public class APICreator {
 
 
     //This class goes to WeatherUnderground and gets the icon for the specific day's forecast.
-    class RequestCurrentMplsWeatherIcon extends AsyncTask<String, String, Bitmap> {
+    class RequestCurrentMplsWeatherIcon extends AsyncTask<String, String, ArrayList<Bitmap>> {
 
         @Override
-        protected Bitmap doInBackground(String... urlInfo) {
+        protected ArrayList<Bitmap> doInBackground(String...urlInfo) {
             String responseString;
-            Bitmap weatherIcon = null;
-            String forecastIcon;
-
+            Bitmap weatherIcon;
+            String forecastIconURL;
+            ArrayList<Bitmap> weatherIconsArrayList = new ArrayList<>();
             try {
                 URL url = new URL(urlInfo[0]);
-                Integer dayNum = Integer.parseInt(urlInfo[1]);
-
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 InputStream responseStream = new BufferedInputStream(connection.getInputStream());
                 InputStreamReader streamReader = new InputStreamReader(responseStream);
                 StringBuffer buffer = new StringBuffer();
+
                 int c;
                 while ((c = streamReader.read()) != -1) {
                     buffer.append((char) c);
                 }
                 responseString = buffer.toString();
-                JSONObject response = new JSONObject(responseString);
-                JSONObject jso1 = response.getJSONObject("forecast");
-                JSONObject jso2 = jso1.getJSONObject("txt_forecast");
-                JSONArray jsa3 = jso2.getJSONArray("forecastday");
-                JSONObject jso4 = jsa3.getJSONObject(dayNum);
-                forecastIcon = jso4.getString("icon_url");
 
-                URL url2 = new URL(forecastIcon);
-                HttpURLConnection connection2 = (HttpURLConnection) url2.openConnection();
-                InputStream responseStream2 = connection2.getInputStream();
-                weatherIcon = BitmapFactory.decodeStream(responseStream2);
+                for (int i = 0; i <= 6; i = i + 2) {
+                    JSONObject response = new JSONObject(responseString);
+                    JSONObject jso1 = response.getJSONObject("forecast");
+                    JSONObject jso2 = jso1.getJSONObject("txt_forecast");
+                    JSONArray jsa3 = jso2.getJSONArray("forecastday");
+                    JSONObject jso4 = jsa3.getJSONObject(i);
+                    forecastIconURL = jso4.getString("icon_url");
+                    weatherIcon = getImage(forecastIconURL);
+                    weatherIconsArrayList.add(weatherIcon);
+                }
 
             } catch (Exception e) {
                 Log.e(null, "Error fetching weather map", e);
             }
-            return weatherIcon;
+            return weatherIconsArrayList;
         }
 
     }
 
     //This class goes to WeatherUnderground and gets the day of the forecast.
-    class RequestMinneapolisForecastDay extends AsyncTask<String, String, String> {
+    class RequestMinneapolisForecastDay extends AsyncTask<String, String, ArrayList<String>> {
 
         @Override
-        protected String doInBackground(String... urlInfo) {
+        protected ArrayList<String> doInBackground(String... urlInfo) {
             String responseString;
-            String day = null;
+            String day;
+            ArrayList<String> dayArrayList = new ArrayList<>();
 
             try {
                 URL url = new URL(urlInfo[0]);
-                Integer dayNum = Integer.parseInt(urlInfo[1]);
 
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 InputStream responseStream = new BufferedInputStream(connection.getInputStream());
                 InputStreamReader streamReader = new InputStreamReader(responseStream);
                 StringBuffer buffer = new StringBuffer();
+
                 int c;
                 while ((c = streamReader.read()) != -1) {
                     buffer.append((char) c);
                 }
                 responseString = buffer.toString();
-                JSONObject response = new JSONObject(responseString);
-                JSONObject jso1 = response.getJSONObject("forecast");
-                JSONObject jso2 = jso1.getJSONObject("txt_forecast");
-                JSONArray jsa3 = jso2.getJSONArray("forecastday");
-                JSONObject jso4 = jsa3.getJSONObject(dayNum);
-                day = jso4.getString("title");
 
+
+                for (int i = 0; i <= 6; i = i + 2) {
+                    JSONObject response = new JSONObject(responseString);
+                    JSONObject jso1 = response.getJSONObject("forecast");
+                    JSONObject jso2 = jso1.getJSONObject("txt_forecast");
+                    JSONArray jsa3 = jso2.getJSONArray("forecastday");
+                    JSONObject jso4 = jsa3.getJSONObject(i);
+                    day = jso4.getString(urlInfo[1]);
+                    dayArrayList.add(day);
+                }
             } catch (Exception e) {
-                Log.e(null, "Error fetching weather map", e);
+                Log.e(null, "Error fetching weather info.", e);
             }
-            return day;
+            return dayArrayList;
         }
     }
 }
