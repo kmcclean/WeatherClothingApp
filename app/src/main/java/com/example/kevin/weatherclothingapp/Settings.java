@@ -34,7 +34,7 @@ public class Settings extends Activity{
     // http://developer.android.com/reference/android/webkit/WebView.html
     // https://developer.amazon.com/public/apis/earn/mobile-associates/javadocs/amazon-mobile-associates-javadoc
     // https://developer.amazon.com/public/apis/earn/mobile-associates/docs/direct-linking
-
+//
     private static final String TAG = "Project1Test1";
     private TextView mStoreToSearchTextView;
     private TextView mCategoryToSearchTextView;
