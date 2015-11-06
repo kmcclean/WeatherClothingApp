@@ -43,7 +43,7 @@ public class APICreator {
     public JSONObject getEtsyJSONObject(){
 
         String etsyKey = getKeyFromRawResource("etsykey");
-        String etsyUrl = String.format("https://openapi.etsy.com/v2/listings/active?api_key=%s&limit=5&category=clothing&fields=title,url&includes=MainImage", etsyKey);
+        String etsyUrl = String.format("https://openapi.etsy.com/v2/listings/active?api_key=%s&limit=5&category=clothing&fields=title,price,description&includes=MainImage", etsyKey);
         etsyImageURLStringArray = null;
         JSONObject etsyJSO = null;
 

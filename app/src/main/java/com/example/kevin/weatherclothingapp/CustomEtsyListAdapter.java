@@ -2,6 +2,7 @@ package com.example.kevin.weatherclothingapp;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +19,8 @@ public class CustomEtsyListAdapter extends ArrayAdapter<String> {
 
     public Activity mContext;
 
+    public final String TAG = "CustomEtsyListAdapter";
+
     TextView mTitle;
     TextView mPrice;
     TextView mDescription;
@@ -30,7 +33,7 @@ public class CustomEtsyListAdapter extends ArrayAdapter<String> {
 
 
     public CustomEtsyListAdapter(Activity context, ArrayList<String> titleList, ArrayList<String> priceList, ArrayList<String> descriptionList, ArrayList<Bitmap> imageList) {
-        super(context, R.layout.weather_list, titleList);
+        super(context, R.layout.etsy_list, titleList);
 
         // TODO Auto-generated constructor stub
         this.mTitleArrayList = titleList;
@@ -42,7 +45,7 @@ public class CustomEtsyListAdapter extends ArrayAdapter<String> {
 
     public View getView(int position,View view,ViewGroup parent) {
         LayoutInflater inflater=mContext.getLayoutInflater();
-        View rowView = inflater.inflate(R.layout.weather_list, null, true);
+        View rowView = inflater.inflate(R.layout.etsy_list, null, true);
 
         //The UI view cannot read ArrayLists, so the ALs have to be converted into Arrays.
         String[] mTitleList = mTitleArrayList.toArray(new String[mTitleArrayList.size()]);
@@ -50,14 +53,20 @@ public class CustomEtsyListAdapter extends ArrayAdapter<String> {
         String[] mDescriptionList = mDescriptionArrayList.toArray(new String[mDescriptionArrayList.size()]);
         Bitmap[] mImageList = mEtsyImageArrayList.toArray(new Bitmap[mEtsyImageArrayList.size()]);
 
+        System.out.println(mTitleList[position]);
+
+        if(mTitleList == null){
+            Log.e(TAG, "mTitleList.");
+        }
+
         mTitle = (TextView) rowView.findViewById(R.id.etsyProductName);
         mTitle.setText(mTitleList[position]);
 
         mPrice = (TextView) rowView.findViewById(R.id.etsyProductPrice);
-        mPrice.setText(mPriceList[position]);
+        mPrice.setText("$" + mPriceList[position]);
 
         mDescription = (TextView) rowView.findViewById(R.id.etsyProductDescription);
-        mDescription.setText(mDescriptionList[position]);
+        //mDescription.setText(mDescriptionList[position]);
 
         mEtsyImage = (ImageView) rowView.findViewById(R.id.etsyImage);
         mEtsyImage.setImageBitmap(mImageList[position]);
