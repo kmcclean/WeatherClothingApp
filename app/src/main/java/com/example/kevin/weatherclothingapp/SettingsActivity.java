@@ -17,7 +17,6 @@ import android.widget.Toast;
 import com.amazon.device.associates.AssociatesAPI;
 import com.amazon.device.associates.LinkService;
 import com.amazon.device.associates.NotInitializedException;
-import com.amazon.device.associates.OpenSearchPageRequest;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -25,7 +24,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 
-public class Settings extends Activity{
+public class SettingsActivity extends Activity{
 
     // Code researched and adapted from examples found on these pages:
     // http://mobilemerit.com/amazon-product-advertising-api-tutorial/
@@ -55,7 +54,7 @@ public class Settings extends Activity{
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.settings);
+        setContentView(R.layout.activity_settings);
         String APPLICATION_KEY = getKeyFromRawResource("APPLICATION_KEY");
         AssociatesAPI.initialize(new AssociatesAPI.Config(APPLICATION_KEY, this));
 
@@ -146,6 +145,7 @@ public class Settings extends Activity{
             public void onClick(View v) {
                 // code runs when button clicked
 
+/*
                 if (amazonItemsToSearch.equals("Shoes")) {
                     amazonCategory = "Shoes";
                 } else {
@@ -157,7 +157,7 @@ public class Settings extends Activity{
 
                 // todo the category and search terms will change depending on what the user has chosen to search for. Categories available for the Amazon Mobile Associates API are found here https://developer.amazon.com/public/apis/earn/mobile-associates/docs/available-search-categories
                 //This is from https://developer.amazon.com/public/apis/earn/mobile-associates/docs/direct-linking
-                Toast t = Toast.makeText(Settings.this, amazonSearchTerm, Toast.LENGTH_LONG);
+                Toast t = Toast.makeText(SettingsActivity.this, amazonSearchTerm, Toast.LENGTH_LONG);
                 t.show();
                 OpenSearchPageRequest request = new OpenSearchPageRequest(amazonCategory, amazonSearchTerm);
                 try {
@@ -165,7 +165,7 @@ public class Settings extends Activity{
                     linkService.openRetailPage(request);
                 } catch (NotInitializedException e) {
                     Log.v(TAG, "NotInitializedException error");
-                }
+                }*/
             }
         });
     }

@@ -28,7 +28,7 @@ public class APICreator {
     //TODO create methods that can be used to cover repetitive code.
 
     ArrayList<Bitmap> weatherIconArrayList;
-    ArrayList<String> forecastDayArrayList;
+
     ArrayList<String> etsyImageURLStringArray;
 
     private final String TAG = "APICreator Class";
@@ -70,38 +70,64 @@ public class APICreator {
     }
 
     //returns a Bitmap of the forecast icon for the selected day.
-    public ArrayList<Bitmap> getForecastIcon() {
+    public JSONObject getWunderGroundJSONData() {
         weatherIconArrayList = null;
         String key = getKeyFromRawResource("key");
         String wuTempUrl = String.format("http://api.wunderground.com/api/%s/forecast/q/MN/Minneapolis.json", key);
+        JSONObject jso = null;
         try{
-            weatherIconArrayList = new RequestCurrentMplsWeatherIcon().execute(wuTempUrl).get();
+            jso = new RequestWunderGroundData().execute(wuTempUrl).get();
         }
         catch (Exception e){
-            Log.e(TAG, "Unable to get Bitmap. Check getForecastIcon method.", e);
+            Log.e(TAG, "Unable to get Bitmap. Check getWunderGroundJSONData method.", e);
         }
-        if (weatherIconArrayList == null){
-            Log.e(TAG, "weatherIconArrayList variable in getForecastIcon method is null.");
+        if (jso == null){
+            Log.e(TAG, "weatherIconArrayList variable in getWunderGroundJSONData method is null.");
         }
-        return weatherIconArrayList;
+        return jso;
+    }
+
+    public ArrayList<Bitmap> getWeatherIconArrayList(JSONObject jso){
+
+        ArrayList<Bitmap> weatherIconsArrayList = new ArrayList<>();
+        String forecastIconURL;
+        Bitmap weatherIcon;
+
+        try {
+            for (int i = 0; i <= 6; i = i + 2) {
+                JSONObject jso1 = jso.getJSONObject("forecast");
+                JSONObject jso2 = jso1.getJSONObject("txt_forecast");
+                JSONArray jsa3 = jso2.getJSONArray("forecastday");
+                JSONObject jso4 = jsa3.getJSONObject(i);
+                forecastIconURL = jso4.getString("icon_url");
+                weatherIcon = new RequestImages().execute(forecastIconURL).get();
+                weatherIconsArrayList.add(weatherIcon);
+            }
+        }
+        catch (Exception e){
+            Log.e(TAG, "JSON error in getForecastDayArrayList");
+        }
+        return weatherIconsArrayList;
     }
 
     //returns the selected day for the Forecast (Monday, Tuesday, etc.).
-    public ArrayList<String> getForecastStringInfo(String string) {
-        forecastDayArrayList = null;
-        String key = getKeyFromRawResource("key");
-        String wuTempUrl = String.format("http://api.wunderground.com/api/%s/forecast/q/MN/Minneapolis.json", key);
-        Log.i(TAG, "The string is" + string);
-        try{
-            forecastDayArrayList = new RequestMinneapolisForecastDay().execute(wuTempUrl, string).get();
+    public ArrayList<String> getWunderGroundStringInfo(JSONObject jso, String s) {
+        ArrayList<String> stringArrayList = new ArrayList<>();
+        String day;
+        try {
+            for (int i = 0; i <= 6; i = i+2) {
+                JSONObject jso1 = jso.getJSONObject("forecast");
+                JSONObject jso2 = jso1.getJSONObject("txt_forecast");
+                JSONArray jsa3 = jso2.getJSONArray("forecastday");
+                JSONObject jso4 = jsa3.getJSONObject(i);
+                day = jso4.getString(s);
+                stringArrayList.add(day);
+            }
         }
         catch (Exception e){
-            Log.e(TAG, "Unable to get String. Check getForecastDay method.", e);
+            Log.e(TAG, "Error in getForecastStringInfo method.");
         }
-        if (forecastDayArrayList == null){
-            Log.e(TAG, "forecastDayArrayList variable in getForecastDay method is null.");
-        }
-        return forecastDayArrayList;
+        return stringArrayList;
     }
 
     class RequestEtsyImagesString extends AsyncTask<String, String, JSONObject> {
@@ -142,7 +168,22 @@ public class APICreator {
 
             return bitmap;
         }
+    }
 
+    protected String getWeatherDescription(String weatherUndergroundIcon) {
+
+        String weatherDescription;
+        // todo this variable has three possibilities based on the weatherIcon from the wunderground forecast: mild, rainy, and snowy. IN the main program, weatherIcon is a BitMap, but the icon text can be pulled from the wunderground json data easily
+        if (weatherUndergroundIcon.contains("rain")||weatherUndergroundIcon.contains("tstorms")) {
+            weatherDescription = "rainy";
+        }
+        else if (weatherUndergroundIcon.contains("flurries")||weatherUndergroundIcon.contains("sleet")||weatherUndergroundIcon.contains("snow")){
+            weatherDescription = "snowy";
+        }
+        else {
+            weatherDescription = "mild";
+        }
+        return weatherDescription;
     }
 
     protected String getEtsyString(JSONObject jso, int i, String s){
@@ -187,6 +228,109 @@ public class APICreator {
         return image;
     }
 
+    protected String createAmazonSearchTerm(String weatherDescription, String temperatureDescription, String amazonItemsToSearch, String amazonSearchMenWomenChildren) {
+        // todo The search string defined by amazonItemsToSearch will change to depending on a) the choice made in categoryToSearch, b) the choice made in itemToSearch, and c) the two weather-forecast variables, which will affect the phrasing of amazonItemsToSearch, i.e. "parkas" vs. "windbreakers." Currently all the variations of amazonItemsToSearch are the ones for mild, clear weather.
+        if (weatherDescription.equals("snowy") ||temperatureDescription.equals("freezing")) {
+            // You would probably dress essentially the same way in snowy or very cold weather, so the clothing options pulled from the store can be the same
+            if (amazonItemsToSearch.equals("Hats")) {
+                amazonItemsToSearch = "Hats";
+            } else if (amazonItemsToSearch.equals("Jackets and Coats")) {
+                amazonItemsToSearch = "Jackets and Coats";
+            } else if (amazonItemsToSearch.equals("Shirts")) {
+                amazonItemsToSearch = "Shirts";
+            } else if (amazonItemsToSearch.equals("Dresses and skirts")) {
+                amazonItemsToSearch = "Dresses and skirts";
+            } else if (amazonItemsToSearch.equals("Pants")) {
+                amazonItemsToSearch.equals("Pants");
+            } else if (amazonItemsToSearch.equals("Suits, sport coats and blazers")) {
+                amazonItemsToSearch = "Suits, sport coats and blazers";
+            } else if (amazonItemsToSearch.equals("Socks and hosiery")) {
+                amazonItemsToSearch = "Socks and hosiery";
+            } else if (amazonItemsToSearch.equals("Shoes")) {
+                amazonItemsToSearch = "Shoes";
+            }
+            return amazonSearchMenWomenChildren + " " + amazonItemsToSearch;
+        } else if (temperatureDescription.equals("cold")) {
+            // Cold, warm or hot temperatures will return different clothing choices. Rainy weather will affect some clothing choices (shirts, for instance) but not others (like socks), .
+            if (amazonItemsToSearch.equals("Hats")) {
+                if (weatherDescription.equals("rainy")) {
+                    amazonItemsToSearch = "Hats";
+                } else amazonItemsToSearch = "Hats";
+            } else if (amazonItemsToSearch.equals("Jackets and Coats")) {
+                if (weatherDescription.equals("rainy")) {
+                    amazonItemsToSearch = "Jackets and Coats";
+                } else amazonItemsToSearch = "Jackets and Coats";
+            } else if (amazonItemsToSearch.equals("Shirts")) {
+                amazonItemsToSearch = "Shirts";
+            } else if (amazonItemsToSearch.equals("Dresses and skirts")) {
+                amazonItemsToSearch = "Dresses and skirts";
+            } else if (amazonItemsToSearch.equals("Pants")) {
+                amazonItemsToSearch = "Pants";
+            } else if (amazonItemsToSearch.equals("Suits, sport coats and blazers")) {
+                amazonItemsToSearch = "Suits, sport coats and blazers";
+            } else if (amazonItemsToSearch.equals("Socks and hosiery")) {
+                amazonItemsToSearch = "Socks and hosiery";
+            } else if (amazonItemsToSearch.equals("Shoes")) {
+                if (weatherDescription.equals("rainy")) {
+                    amazonItemsToSearch = "Shoes";
+                } else amazonItemsToSearch = "Shoes";
+            }
+            return amazonSearchMenWomenChildren + " " + amazonItemsToSearch;
+        } else if (temperatureDescription.equals("warm")) {
+            if (amazonItemsToSearch.equals("Hats")) {
+                if (weatherDescription.equals("rainy")) {
+                    amazonItemsToSearch = "Hats";
+                } else amazonItemsToSearch = "Hats";
+            } else if (amazonItemsToSearch.equals("Jackets and Coats")) {
+                if (weatherDescription.equals("rainy")) {
+                    amazonItemsToSearch = "Jackets and Coats";
+                } else amazonItemsToSearch = "Jackets and Coats";
+            } else if (amazonItemsToSearch.equals("Shirts")) {
+                amazonItemsToSearch = "Shirts";
+            } else if (amazonItemsToSearch.equals("Dresses and skirts")) {
+                amazonItemsToSearch = "Dresses and skirts";
+            } else if (amazonItemsToSearch.equals("Pants")) {
+                amazonItemsToSearch = "Pants";
+            } else if (amazonItemsToSearch.equals("Suits, sport coats and blazers")) {
+                amazonItemsToSearch = "Suits, sport coats and blazers";
+            } else if (amazonItemsToSearch.equals("Socks and hosiery")) {
+                amazonItemsToSearch = "Socks and hosiery";
+            } else if (amazonItemsToSearch.equals("Shoes")) {
+                if (weatherDescription.equals("rainy")) {
+                    amazonItemsToSearch = "Shoes";
+                } else amazonItemsToSearch = "Shoes";
+            }
+            return amazonSearchMenWomenChildren + " " + amazonItemsToSearch;
+        } else if (temperatureDescription.equals("hot")) {
+            if (amazonItemsToSearch.equals("Hats")) {
+                if (weatherDescription.equals("rainy")) {
+                    amazonItemsToSearch = "Hats";
+                } else amazonItemsToSearch = "Hats";
+            } else if (amazonItemsToSearch.equals("Jackets and Coats")) {
+                if (weatherDescription.equals("rainy")) {
+                    amazonItemsToSearch = "Jackets and Coats";
+                } else amazonItemsToSearch = "Jackets and Coats";
+            } else if (amazonItemsToSearch.equals("Shirts")) {
+                amazonItemsToSearch = "Shirts";
+            } else if (amazonItemsToSearch.equals("Dresses and skirts")) {
+                amazonItemsToSearch = "Dresses and skirts";
+            } else if (amazonItemsToSearch.equals("Pants")) {
+                amazonItemsToSearch = "Pants";
+            } else if (amazonItemsToSearch.equals("Suits, sport coats and blazers")) {
+                amazonItemsToSearch = "Suits, sport coats and blazers";
+            } else if (amazonItemsToSearch.equals("Socks and hosiery")) {
+                amazonItemsToSearch = "Socks and hosiery";
+            } else if (amazonItemsToSearch.equals("Shoes")) {
+                if (weatherDescription.equals("rainy")) {
+                    amazonItemsToSearch = "Shoes";
+                } else amazonItemsToSearch = "Shoes";
+            }
+            return amazonSearchMenWomenChildren + " " + amazonItemsToSearch;
+        }
+        return amazonSearchMenWomenChildren + " " + amazonItemsToSearch;
+
+    }
+
     //gets the key from the raw file.
     private String getKeyFromRawResource(String requestedKey) {
         InputStream keyStream = null;
@@ -208,15 +352,16 @@ public class APICreator {
     }
 
 
-    //This class goes to WeatherUnderground and gets the icon for the specific day's forecast.
-    class RequestCurrentMplsWeatherIcon extends AsyncTask<String, String, ArrayList<Bitmap>> {
+    //This class goes to WeatherUnderground gets the data.
+    class RequestWunderGroundData extends AsyncTask<String, String, JSONObject> {
 
         @Override
-        protected ArrayList<Bitmap> doInBackground(String...urlInfo) {
+        protected JSONObject doInBackground(String...urlInfo) {
             String responseString;
             Bitmap weatherIcon;
             String forecastIconURL;
             ArrayList<Bitmap> weatherIconsArrayList = new ArrayList<>();
+            JSONObject response = null;
             try {
                 URL url = new URL(urlInfo[0]);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -229,63 +374,22 @@ public class APICreator {
                     buffer.append((char) c);
                 }
                 responseString = buffer.toString();
-
-                for (int i = 0; i <= 6; i = i + 2) {
-                    JSONObject response = new JSONObject(responseString);
+                response = new JSONObject(responseString);
+                /*JSONObject response = new JSONObject(responseString);
                     JSONObject jso1 = response.getJSONObject("forecast");
                     JSONObject jso2 = jso1.getJSONObject("txt_forecast");
                     JSONArray jsa3 = jso2.getJSONArray("forecastday");
                     JSONObject jso4 = jsa3.getJSONObject(i);
                     forecastIconURL = jso4.getString("icon_url");
                     weatherIcon = getImage(forecastIconURL);
-                    weatherIconsArrayList.add(weatherIcon);
-                }
+                    weatherIconsArrayList.add(weatherIcon);*/
+
 
             } catch (Exception e) {
                 Log.e(null, "Error fetching weather map", e);
             }
-            return weatherIconsArrayList;
+            return response;
         }
 
-    }
-
-    //This class goes to WeatherUnderground and gets the day of the forecast.
-    class RequestMinneapolisForecastDay extends AsyncTask<String, String, ArrayList<String>> {
-
-        @Override
-        protected ArrayList<String> doInBackground(String... urlInfo) {
-            String responseString;
-            String day;
-            ArrayList<String> dayArrayList = new ArrayList<>();
-
-            try {
-                URL url = new URL(urlInfo[0]);
-
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                InputStream responseStream = new BufferedInputStream(connection.getInputStream());
-                InputStreamReader streamReader = new InputStreamReader(responseStream);
-                StringBuffer buffer = new StringBuffer();
-
-                int c;
-                while ((c = streamReader.read()) != -1) {
-                    buffer.append((char) c);
-                }
-                responseString = buffer.toString();
-
-
-                for (int i = 0; i <= 6; i = i + 2) {
-                    JSONObject response = new JSONObject(responseString);
-                    JSONObject jso1 = response.getJSONObject("forecast");
-                    JSONObject jso2 = jso1.getJSONObject("txt_forecast");
-                    JSONArray jsa3 = jso2.getJSONArray("forecastday");
-                    JSONObject jso4 = jsa3.getJSONObject(i);
-                    day = jso4.getString(urlInfo[1]);
-                    dayArrayList.add(day);
-                }
-            } catch (Exception e) {
-                Log.e(null, "Error fetching weather info.", e);
-            }
-            return dayArrayList;
-        }
     }
 }
