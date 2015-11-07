@@ -120,7 +120,6 @@ public class WeatherClothingActivity extends ListActivity {
         Intent i = new Intent(WeatherClothingActivity.this, SettingsActivity.class);
         Bundle b = new Bundle();
 
-        b.putString();
 
         startActivityForResult(i, 0);
     }
