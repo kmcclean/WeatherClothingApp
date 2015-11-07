@@ -16,14 +16,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 
-/**
- * Created by Kevin on 10/26/2015.
- */
 public class APICreator {
-
-    //TODO etsyAPIRequest
-
-    //TODO amazonAPIRequest
 
     //TODO create methods that can be used to cover repetitive code.
 
@@ -40,11 +33,17 @@ public class APICreator {
     }
 
     //this gets the image from Etsy that has been selected.
-    public JSONObject getEtsyJSONObject(){
+    public JSONObject getEtsyJSONObject(String category, String item){
 
         String etsyKey = getKeyFromRawResource("etsykey");
-        String etsyUrl = String.format("https://openapi.etsy.com/v2/listings/active?api_key=%s&limit=5&category=clothing&fields=title,price,description&includes=MainImage", etsyKey);
+        String baseURL = "https://openapi.etsy.com/v2/listings/active?api_key=%s&limit=5&category=clothing&fields=title,price,url&includes=MainImage&keywords=";
+        String conditions = category + "," + item;
+        String urlWithConditions = baseURL + conditions;
+        String etsyUrl = String.format(urlWithConditions, etsyKey);
+        Log.e(TAG, etsyUrl);
+
         etsyImageURLStringArray = null;
+
         JSONObject etsyJSO = null;
 
         try {
@@ -86,6 +85,46 @@ public class APICreator {
         }
         return jso;
     }
+
+    protected ArrayList<String> getTemperatureDescription(JSONObject jso) {
+        // the variable temperatureDescription has four possibilities based on the temperature forecast from wunderground. <32 freezing, 32-50 cold, 50-75 warm, and >75 hot. The variables highTemp and lowTemp are pulled from the field fcttext in the wunderground forecast.
+
+        String temperatureDescription = null;
+        ArrayList<String> tempDescriptionList = new ArrayList<>();
+        int lowTemp;
+        int highTemp;
+
+        try {
+            for (int i = 0; i <= 4; i++) {
+                JSONObject jso1 = jso.getJSONObject("forecast");
+                JSONObject jso2 = jso1.getJSONObject("simpleforecast");
+                JSONArray jsa3 = jso2.getJSONArray("forecastday");
+                JSONObject jso4 = jsa3.getJSONObject(i);
+                JSONObject jso5 = jso4.getJSONObject("high");
+                highTemp = jso5.getInt("fahrenheit");
+
+                jso5 = jso4.getJSONObject("low");
+                lowTemp = jso5.getInt("fahrenheit");
+
+                if (lowTemp <= 32) {
+                    temperatureDescription = "freezing";
+                } else if (32 < lowTemp&&lowTemp <= 50) {
+                    temperatureDescription = "cold";
+                } else if (50 < lowTemp&& highTemp <= 75) {
+                    temperatureDescription = "warm";
+                } else if (highTemp > 75) {
+                    temperatureDescription = "hot";
+                }
+                tempDescriptionList.add(temperatureDescription);
+            }
+        }
+        catch (Exception e){
+            Log.e(TAG, "JSON error in getTemperatureDescription");
+        }
+
+        return tempDescriptionList;
+    }
+
 
     public ArrayList<Bitmap> getWeatherIconArrayList(JSONObject jso){
 
@@ -229,7 +268,7 @@ public class APICreator {
     }
 
     protected String createAmazonSearchTerm(String weatherDescription, String temperatureDescription, String amazonItemsToSearch, String amazonSearchMenWomenChildren) {
-        // todo The search string defined by amazonItemsToSearch will change to depending on a) the choice made in categoryToSearch, b) the choice made in itemToSearch, and c) the two weather-forecast variables, which will affect the phrasing of amazonItemsToSearch, i.e. "parkas" vs. "windbreakers." Currently all the variations of amazonItemsToSearch are the ones for mild, clear weather.
+        // todo The search string defined by itemType will change to depending on a) the choice made in categoryToSearch, b) the choice made in itemToSearch, and c) the two weather-forecast variables, which will affect the phrasing of itemType, i.e. "parkas" vs. "windbreakers." Currently all the variations of itemType are the ones for mild, clear weather.
         if (weatherDescription.equals("snowy") ||temperatureDescription.equals("freezing")) {
             // You would probably dress essentially the same way in snowy or very cold weather, so the clothing options pulled from the store can be the same
             if (amazonItemsToSearch.equals("Hats")) {
@@ -305,8 +344,10 @@ public class APICreator {
             if (amazonItemsToSearch.equals("Hats")) {
                 if (weatherDescription.equals("rainy")) {
                     amazonItemsToSearch = "Hats";
-                } else amazonItemsToSearch = "Hats";
-            } else if (amazonItemsToSearch.equals("Jackets and Coats")) {
+                }
+                else amazonItemsToSearch = "Hats";
+            }
+            else if (amazonItemsToSearch.equals("Jackets and Coats")) {
                 if (weatherDescription.equals("rainy")) {
                     amazonItemsToSearch = "Jackets and Coats";
                 } else amazonItemsToSearch = "Jackets and Coats";
@@ -332,7 +373,7 @@ public class APICreator {
     }
 
     //gets the key from the raw file.
-    private String getKeyFromRawResource(String requestedKey) {
+    protected String getKeyFromRawResource(String requestedKey) {
         InputStream keyStream = null;
         if (requestedKey.equals("etsykey")){
             keyStream = activity.getResources().openRawResource(R.raw.etsykey);
@@ -340,7 +381,12 @@ public class APICreator {
         else if (requestedKey.equals("key")) {
             keyStream = activity.getResources().openRawResource(R.raw.key);
         }
+        else if(requestedKey.equals("APPLICATION_KEY")){
+            keyStream = activity.getResources().openRawResource(R.raw.amazon_application_key);
+        }
+
         BufferedReader keyStreamReader = new BufferedReader(new InputStreamReader(keyStream));
+
         try{
             String key = keyStreamReader.readLine();
             return key;
@@ -358,9 +404,6 @@ public class APICreator {
         @Override
         protected JSONObject doInBackground(String...urlInfo) {
             String responseString;
-            Bitmap weatherIcon;
-            String forecastIconURL;
-            ArrayList<Bitmap> weatherIconsArrayList = new ArrayList<>();
             JSONObject response = null;
             try {
                 URL url = new URL(urlInfo[0]);
@@ -375,15 +418,6 @@ public class APICreator {
                 }
                 responseString = buffer.toString();
                 response = new JSONObject(responseString);
-                /*JSONObject response = new JSONObject(responseString);
-                    JSONObject jso1 = response.getJSONObject("forecast");
-                    JSONObject jso2 = jso1.getJSONObject("txt_forecast");
-                    JSONArray jsa3 = jso2.getJSONArray("forecastday");
-                    JSONObject jso4 = jsa3.getJSONObject(i);
-                    forecastIconURL = jso4.getString("icon_url");
-                    weatherIcon = getImage(forecastIconURL);
-                    weatherIconsArrayList.add(weatherIcon);*/
-
 
             } catch (Exception e) {
                 Log.e(null, "Error fetching weather map", e);
