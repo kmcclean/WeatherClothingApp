@@ -40,6 +40,24 @@ public class SettingsActivity extends Activity{
     private TextView mCategoryToSearchTextView;
     private TextView mItemsToSearchTextView;
 
+    RadioButton rbSearchAmazon;
+    RadioButton rbSearchEtsy;
+    RadioButton rbSearchMens;
+    RadioButton rbSearchWomens;
+    RadioButton rbSearchChildrens;
+
+    RadioGroup radioGroupItemsToSearch;
+    RadioButton rbSearchHats;
+    RadioButton rbSearchCoats;
+    RadioButton rbSearchShirts;
+    RadioButton rbSearchDresses;
+    RadioButton rbSearchPants;
+    RadioButton rbSearchSuits;
+    RadioButton rbSearchSocks;
+    RadioButton rbSearchShoes;
+
+    RadioGroup radioGroupStoreToSearch;
+    RadioGroup radioGroupCategoryToSearch;
     String storeToSearch;
     String categoryType;
     String itemType;
@@ -55,11 +73,13 @@ public class SettingsActivity extends Activity{
         AssociatesAPI.initialize(new AssociatesAPI.Config(APPLICATION_KEY, this));
 
         //---STORE TO SEARCH RADIOBUTTONS---
-        RadioGroup radioGroupStoreToSearch = (RadioGroup) findViewById(R.id.store_to_search_radiogroup);
+        radioGroupStoreToSearch = (RadioGroup) findViewById(R.id.store_to_search_radiogroup);
+        rbSearchAmazon = (RadioButton) findViewById(R.id.store_to_search_amazon);
+        rbSearchEtsy = (RadioButton) findViewById(R.id.store_to_search_etsy);
+        radioGroupStoreToSearch.check(R.id.store_to_search_amazon);
+
         radioGroupStoreToSearch.setOnCheckedChangeListener(new OnCheckedChangeListener() {
             public void onCheckedChanged(RadioGroup group, int checkedId) {
-                RadioButton rbSearchAmazon = (RadioButton) findViewById(R.id.store_to_search_amazon);
-                RadioButton rbSearchEtsy = (RadioButton) findViewById(R.id.store_to_search_etsy);
                 if (rbSearchAmazon.isChecked()) {
                     DisplayToast("You have selected Amazon!");
                     storeToSearch = "Amazon";
@@ -72,12 +92,15 @@ public class SettingsActivity extends Activity{
 
         //---CATEGORY TO SEARCH RADIOBUTTONS---
         mCategoryToSearchTextView = (TextView) findViewById(R.id.category_to_search_textview);
-        RadioGroup radioGroupCategoryToSearch = (RadioGroup) findViewById(R.id.category_to_search_radiogroup);
+
+        radioGroupCategoryToSearch = (RadioGroup) findViewById(R.id.category_to_search_radiogroup);
+        rbSearchMens = (RadioButton) findViewById(R.id.category_to_search_mens);
+        rbSearchWomens = (RadioButton) findViewById(R.id.category_to_search_womens);
+        rbSearchChildrens = (RadioButton) findViewById(R.id.category_to_search_childrens);
+        radioGroupCategoryToSearch.check(R.id.category_to_search_mens);
+
         radioGroupCategoryToSearch.setOnCheckedChangeListener(new OnCheckedChangeListener() {
             public void onCheckedChanged(RadioGroup group, int checkedId) {
-                RadioButton rbSearchMens = (RadioButton) findViewById(R.id.category_to_search_mens);
-                RadioButton rbSearchWomens = (RadioButton) findViewById(R.id.category_to_search_womens);
-                RadioButton rbSearchChildrens = (RadioButton) findViewById(R.id.category_to_search_childrens);
                 if (rbSearchMens.isChecked()) {
                     DisplayToast("You have selected Men's Clothing!");
                     categoryType = "Men's Clothing";
@@ -93,17 +116,19 @@ public class SettingsActivity extends Activity{
 
         //---ITEMS TO SEARCH RADIOBUTTONS---
         mItemsToSearchTextView = (TextView) findViewById(R.id.items_to_search_textview);
-        RadioGroup radioGroupItemsToSearch = (RadioGroup) findViewById(R.id.items_to_search_radiogroup);
+        radioGroupItemsToSearch = (RadioGroup) findViewById(R.id.items_to_search_radiogroup);
+        rbSearchHats = (RadioButton) findViewById(R.id.item_to_search_hats);
+        rbSearchCoats = (RadioButton) findViewById(R.id.item_to_search_coats);
+        rbSearchShirts = (RadioButton) findViewById(R.id.item_to_search_shirts);
+        rbSearchDresses = (RadioButton) findViewById(R.id.item_to_search_dresses);
+        rbSearchPants = (RadioButton) findViewById(R.id.item_to_search_pants);
+        rbSearchSuits = (RadioButton) findViewById(R.id.item_to_search_suits);
+        rbSearchSocks = (RadioButton) findViewById(R.id.item_to_search_socks);
+        rbSearchShoes = (RadioButton) findViewById(R.id.item_to_search_shoes);
+        radioGroupItemsToSearch.check(R.id.item_to_search_hats);
+
         radioGroupItemsToSearch.setOnCheckedChangeListener(new OnCheckedChangeListener() {
             public void onCheckedChanged(RadioGroup group, int checkedId) {
-                RadioButton rbSearchHats = (RadioButton) findViewById(R.id.item_to_search_hats);
-                RadioButton rbSearchCoats = (RadioButton) findViewById(R.id.item_to_search_coats);
-                RadioButton rbSearchShirts = (RadioButton) findViewById(R.id.item_to_search_shirts);
-                RadioButton rbSearchDresses = (RadioButton) findViewById(R.id.item_to_search_dresses);
-                RadioButton rbSearchPants = (RadioButton) findViewById(R.id.item_to_search_pants);
-                RadioButton rbSearchSuits = (RadioButton) findViewById(R.id.item_to_search_suits);
-                RadioButton rbSearchSocks = (RadioButton) findViewById(R.id.item_to_search_socks);
-                RadioButton rbSearchShoes = (RadioButton) findViewById(R.id.item_to_search_shoes);
 
                 if (rbSearchHats.isChecked()) {
                     DisplayToast("You have selected Hats!");
@@ -139,7 +164,7 @@ public class SettingsActivity extends Activity{
             @Override
             public void onClick(View v) {
                 // code runs when button clicked
-
+                Log.e(TAG, "itemType: " + itemType + "; storeToSearch: " + storeToSearch + "; categoryType: " + categoryType);
                 Intent i = getIntent();
                 i.putExtra(storeToSearch, STORE);
                 i.putExtra(categoryType, CATEGORY);
