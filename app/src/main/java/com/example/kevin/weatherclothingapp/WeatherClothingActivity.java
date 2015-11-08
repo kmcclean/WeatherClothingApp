@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.ListActivity;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -22,6 +23,10 @@ import com.amazon.device.associates.LinkService;
 import com.amazon.device.associates.NotInitializedException;
 import com.amazon.device.associates.OpenSearchPageRequest;
 
+/*import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationServices;*/
+
 import org.json.JSONObject;
 import java.util.ArrayList;
 
@@ -29,8 +34,6 @@ public class WeatherClothingActivity extends ListActivity {
 
     private final String TAG = "WeatherClothingActivity";
     private final String BUNDLE = "com.example.kevin.weatherclothingapp";
-
-    private final int RESULT_OK = 1;
 
     public final int AMAZON = 0;
     public final int ETSY = 1;
@@ -46,8 +49,6 @@ public class WeatherClothingActivity extends ListActivity {
     String chosenCategory;
     String chosenItems;
 
-    String amazonSearchTerm;
-    String amazonCategory;
     String temperatureDescription;
     String weatherDescription;
 
@@ -55,6 +56,26 @@ public class WeatherClothingActivity extends ListActivity {
 
     ArrayList<String> temperatureDescriptionList = new ArrayList<>();
     ArrayList<String> iconNameArrayList = new ArrayList<>();
+
+    String latitude;
+    String longitude;
+
+
+    /**
+     * Provides the entry point to Google Play services.
+     */
+    //protected GoogleApiClient mGoogleApiClient;
+
+    /**
+     * Represents a geographical location.
+     */
+    protected static Location mLastLocation;
+
+    protected String mLatitudeLabel;
+    protected String mLongitudeLabel;
+    private String newCityName;
+    private String newCityZMW;
+    private boolean isNewCity = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,9 +107,6 @@ public class WeatherClothingActivity extends ListActivity {
         weatherList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
-                Intent returnedIntent = getIntent();
-                onActivityResult(SETTINGS, RESULT_OK, returnedIntent);
 
                 if (chosenStore == AMAZON) {
                     if (chosenItems.equals("Shoes")) {
@@ -145,8 +163,7 @@ public class WeatherClothingActivity extends ListActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == RESULT_OK){
-
+        if (requestCode == SETTINGS){
             String store = data.getStringExtra(STORE);
             if (store.equals("Etsy")){
                 chosenStore = ETSY;
@@ -161,6 +178,39 @@ public class WeatherClothingActivity extends ListActivity {
             Log.e(TAG,"chosenStore: " + chosenStore + "; chosenCategory: " + chosenCategory + "; chosenItems: " + chosenItems);
         }
     }
+/*
+    @Override
+    public void onConnected(Bundle bundle) {
+        // Provides a simple way of getting a device's location and is well suited for
+        // applications that do not require a fine-grained location and that do not need location
+        // updates. Gets the best and most recent location currently available, which may be null
+        // in rare cases when a location is not available.
+        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        if (mLastLocation != null) {
+            latitude = String.valueOf(mLastLocation.getLatitude());
+            longitude = String.valueOf(mLastLocation.getLongitude());
+        } else {
+            Toast.makeText(this, R.string.no_location_detected, Toast.LENGTH_LONG).show();
+        }
+
+
+
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+        // The connection to Google Play services was lost for some reason. We call connect() to
+        // attempt to re-establish the connection.
+        Log.i(TAG, "Connection suspended");
+        mGoogleApiClient.connect();
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        // Refer to the javadoc for ConnectionResult to see what error codes might be returned in
+        // onConnectionFailed.
+        Log.i(TAG, "Connection failed: ConnectionResult.getErrorCode() = " + connectionResult.getErrorCode());
+    }*/
 }
 
 class MAAWebViewClient extends WebViewClient {

@@ -31,10 +31,10 @@ public class SettingsActivity extends Activity{
     // https://developer.amazon.com/public/apis/earn/mobile-associates/javadocs/amazon-mobile-associates-javadoc
     // https://developer.amazon.com/public/apis/earn/mobile-associates/docs/direct-linking
 //
-    private static final String TAG = "Project1Test1";
-    public final String STORE = "store";
-    public final String CATEGORY = "category";
-    public final String ITEM = "item";
+    private static String TAG = "Project1Test1";
+    public String STORE = "store";
+    public String CATEGORY = "category";
+    public String ITEM = "item";
 
     private TextView mStoreToSearchTextView;
     private TextView mCategoryToSearchTextView;
@@ -166,9 +166,9 @@ public class SettingsActivity extends Activity{
                 // code runs when button clicked
                 Log.e(TAG, "itemType: " + itemType + "; storeToSearch: " + storeToSearch + "; categoryType: " + categoryType);
                 Intent i = getIntent();
-                i.putExtra(storeToSearch, STORE);
-                i.putExtra(categoryType, CATEGORY);
-                i.putExtra(itemType, ITEM);
+                i.putExtra(STORE, storeToSearch);
+                i.putExtra(CATEGORY, categoryType);
+                i.putExtra(ITEM, itemType);
                 setResult(RESULT_OK, i);
                 finish();
             }
