@@ -11,7 +11,8 @@ import android.content.Intent;
         import android.widget.Button;
         import android.widget.EditText;
         import android.support.v7.app.AppCompatActivity;
-        import android.widget.Spinner;
+import android.widget.ListView;
+import android.widget.Spinner;
         import android.widget.TextView;
         import android.widget.Toast;
 
@@ -41,9 +42,10 @@ public class ChangeLocationActivity extends Activity  {
     private TextView mEnterNewLocationTextView;
     private Button mGetCityListButton;
     private Button mChooseCityButton;
-    private HashMap<String,String> cityList = new HashMap<String,String>();
+    private ArrayList<String> cityList = new ArrayList<>();
     private String newCityName;
     private String newCityZMW;
+    private ListView mlistView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,14 +74,17 @@ public class ChangeLocationActivity extends Activity  {
             }
         });
 
+        mlistView = (ListView) findViewById(R.id.change_locationListView);
+
+
         // create a Spinner from the list in the HashMap so that the user can choose one city. That spinner is tied to Button mChooseCityButton, below. Code modified from http://stackoverflow.com/questions/28120588/populating-spinner-using-a-hashmap and from Wei-Meng Lee textbook p. 199, and http://stackoverflow.com/questions/9061689/how-to-sort-hashmap-as-added-in-android-with-arrayadapter
         Spinner newCitySpinner = (Spinner) findViewById(R.id.spinner_new_city_list);
 
-        ArrayList<String> cityArray = new ArrayList<String>();
-        for (String key : cityList.keySet()) {
+        //ArrayList<String> cityArray = new ArrayList<String>();
+        /*for (String key : cityList.keySet()) {
             cityArray.add(key.toString());
-        }
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_single_choice, cityArray);
+        }*/
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_single_choice, cityList);
         newCitySpinner.setAdapter(adapter);
         newCitySpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
@@ -115,10 +120,10 @@ public class ChangeLocationActivity extends Activity  {
 
 
     //This class goes to WeatherUnderground and gets a list of cities from its Autocomplete API.
-    class RequestNewCityList extends AsyncTask<String, String, HashMap<String, String>> {
+    class RequestNewCityList extends AsyncTask<String, String, ArrayList<String>> {
 
         @Override
-        protected HashMap<String, String> doInBackground(String... urlInfo) {
+        protected ArrayList<String> doInBackground(String... urlInfo) {
             String responseString;
             String day = null;
 
@@ -141,13 +146,13 @@ public class ChangeLocationActivity extends Activity  {
                 String jsonCityName;
                 for (int i = 0; i < jsonResults.length(); i++) {
                     JSONObject row = jsonResults.getJSONObject(i);
-                    jsonZMW = row.getString("zmw");
                     jsonCityName = row.getString("name");
-                    cityList.put(jsonCityName,jsonZMW);
+                    cityList.add(jsonCityName);
                 }
             } catch (Exception e) {
                 Log.e(null, "Error fetching city list", e);
             }
+            Log.e(TAG, cityList.toString());
             return cityList;
         }
     }

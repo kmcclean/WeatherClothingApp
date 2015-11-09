@@ -70,12 +70,12 @@ public class APICreator {
     }
 
     //returns a Bitmap of the forecast icon for the selected day.
-    public JSONObject getWunderGroundJSONData(String latitude, String longitude) {
+    public JSONObject getWunderGroundJSONData(double latitude, double longitude) {
         weatherIconArrayList = null;
-        String baseURL =  "http://api.wunderground.com/api/%s/forecast/q/" + latitude + "," + longitude + ".json";
+        String baseURL =  "http://api.wunderground.com/api/%s/forecast/q/" + Double.toString(latitude) + "," + Double.toString(longitude) + ".json";
         //        + WeatherClothingActivity.mLastLocation.getLatitude() + "," + WeatherClothingActivity.mLastLocation.getLongitude() + ".json";
         String key = getKeyFromRawResource("key");
-        String wuTempUrl = String.format("http://api.wunderground.com/api/%s/forecast/q/MN/Minneapolis.json", key);
+        String wuTempUrl = String.format(baseURL, key);
         JSONObject jso = null;
         try{
             jso = new RequestWunderGroundData().execute(wuTempUrl).get();
@@ -89,7 +89,7 @@ public class APICreator {
         return jso;
     }
 
-    protected ArrayList<String> getTemperatureDescription(JSONObject jso) {
+    public ArrayList<String> getTemperatureDescription(JSONObject jso) {
         // the variable temperatureDescription has four possibilities based on the temperature forecast from wunderground. <32 freezing, 32-50 cold, 50-75 warm, and >75 hot. The variables highTemp and lowTemp are pulled from the field fcttext in the wunderground forecast.
 
         String temperatureDescription = null;
