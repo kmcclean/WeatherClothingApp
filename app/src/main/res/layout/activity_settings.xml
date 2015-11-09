@@ -112,11 +112,10 @@
         android:layout_centerHorizontal="true"
         android:layout_below="@id/items_to_search_radiogroup" />
 
-    <WebView
+    <!--<WebView
         android:id="@+id/amazon_results_webview"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/clickbutton" />
-
-
+    -->
 </LinearLayout>

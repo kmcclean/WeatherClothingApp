@@ -3,6 +3,7 @@ package com.example.kevin.weatherclothingapp;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.location.Location;
 import android.os.AsyncTask;
 import android.util.Log;
 import org.json.JSONArray;
@@ -69,8 +70,10 @@ public class APICreator {
     }
 
     //returns a Bitmap of the forecast icon for the selected day.
-    public JSONObject getWunderGroundJSONData() {
+    public JSONObject getWunderGroundJSONData(String latitude, String longitude) {
         weatherIconArrayList = null;
+        String baseURL =  "http://api.wunderground.com/api/%s/forecast/q/" + latitude + "," + longitude + ".json";
+        //        + WeatherClothingActivity.mLastLocation.getLatitude() + "," + WeatherClothingActivity.mLastLocation.getLongitude() + ".json";
         String key = getKeyFromRawResource("key");
         String wuTempUrl = String.format("http://api.wunderground.com/api/%s/forecast/q/MN/Minneapolis.json", key);
         JSONObject jso = null;
@@ -424,6 +427,49 @@ public class APICreator {
             }
             return response;
         }
+    }
 
+    class ChangeLocation extends AsyncTask<String, String, JSONObject>{
+
+        @Override
+        protected JSONObject doInBackground(String... params) {
+            String query = params[0];
+            String baseURL = "http://autocomplete.wunderground.com/aq?query=";
+            String basePlusQuery = baseURL + query;
+
+            String responseString;
+            JSONObject response = null;
+
+            try {
+                URL url = new URL(basePlusQuery);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                InputStream responseStream = new BufferedInputStream(connection.getInputStream());
+                InputStreamReader streamReader = new InputStreamReader(responseStream);
+                StringBuffer buffer = new StringBuffer();
+
+                int c;
+                while ((c = streamReader.read()) != -1) {
+                    buffer.append((char) c);
+                }
+                responseString = buffer.toString();
+                response = new JSONObject(responseString);
+            }
+            catch (Exception e){
+                Log.e(TAG, "Error autocompleting location");
+            }
+
+            return response;
+        }
+    }
+
+    protected JSONObject sendForLocations(String s){
+        JSONObject jso = null;
+        try {
+            jso = new ChangeLocation().execute(s).get();
+        }
+        catch (Exception e){
+
+        }
+        return jso;
     }
 }

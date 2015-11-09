@@ -1,11 +1,16 @@
 package com.example.kevin.weatherclothingapp;
 
+import android.Manifest;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.ListActivity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -23,14 +28,14 @@ import com.amazon.device.associates.LinkService;
 import com.amazon.device.associates.NotInitializedException;
 import com.amazon.device.associates.OpenSearchPageRequest;
 
-/*import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.LocationServices;*/
+import com.google.android.gms.location.LocationServices;
 
 import org.json.JSONObject;
 import java.util.ArrayList;
 
-public class WeatherClothingActivity extends ListActivity {
+public class WeatherClothingActivity extends ListActivity{//} implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     private final String TAG = "WeatherClothingActivity";
     private final String BUNDLE = "com.example.kevin.weatherclothingapp";
@@ -60,11 +65,14 @@ public class WeatherClothingActivity extends ListActivity {
     String latitude;
     String longitude;
 
+    private LocationManager locationManager;
+    Location location;
+
 
     /**
      * Provides the entry point to Google Play services.
      */
-    //protected GoogleApiClient mGoogleApiClient;
+    protected GoogleApiClient mGoogleApiClient;
 
     /**
      * Represents a geographical location.
@@ -87,12 +95,21 @@ public class WeatherClothingActivity extends ListActivity {
         chosenItems = "hats";
         a = this;
 
+        //http://stackoverflow.com/questions/32715189/location-manager-remove-updates-permission
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                    || checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            latitude = Double.toString(location.getLatitude());
+            longitude = Double.toString(location.getLongitude());
+            Log.e(TAG, "Latitude: " + latitude);
+            }
 
         APICreator apic = new APICreator(a);
         String APPLICATION_KEY = apic.getKeyFromRawResource("APPLICATION_KEY");
         AssociatesAPI.initialize(new AssociatesAPI.Config(APPLICATION_KEY, this));
 
-        JSONObject wunderGroundJSONData = apic.getWunderGroundJSONData();
+        JSONObject wunderGroundJSONData = apic.getWunderGroundJSONData(latitude, longitude);
         ArrayList<Bitmap> weatherIconArrayList = apic.getWeatherIconArrayList(wunderGroundJSONData);
         ArrayList<String> forecastDayArrayList = apic.getWunderGroundStringInfo(wunderGroundJSONData, "title");
         ArrayList<String> forecastConditionsArrayList = apic.getWunderGroundStringInfo(wunderGroundJSONData, "fcttext");
@@ -122,6 +139,7 @@ public class WeatherClothingActivity extends ListActivity {
                     String amazonString = apic.createAmazonSearchTerm(weatherDescription, temperatureDescription, chosenItems, chosenCategory);
                     Log.e(TAG, amazonString);
                     // todo the category and search terms will change depending on what the user has chosen to search for. Categories available for the Amazon Mobile Associates API are found here https://developer.amazon.com/public/apis/earn/mobile-associates/docs/available-search-categories
+
                     //This is from https://developer.amazon.com/public/apis/earn/mobile-associates/docs/direct-linking
                     Toast t = Toast.makeText(WeatherClothingActivity.this, amazonString, Toast.LENGTH_LONG);
                     t.show();
@@ -159,11 +177,17 @@ public class WeatherClothingActivity extends ListActivity {
 
     }
 
+    public void openChangeLocation(MenuItem menuItem){
+        Intent launchChangeLocationActivity = new Intent(WeatherClothingActivity.this, ChangeLocationActivity.class);
+        // this means we expect some result to be returned to the activity
+        startActivityForResult(launchChangeLocationActivity, LOCATION);
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == SETTINGS){
+        if (requestCode == SETTINGS && resultCode == RESULT_OK){
             String store = data.getStringExtra(STORE);
             if (store.equals("Etsy")){
                 chosenStore = ETSY;
@@ -174,10 +198,18 @@ public class WeatherClothingActivity extends ListActivity {
 
             chosenCategory = data.getStringExtra(CATEGORY);
             chosenItems = data.getStringExtra(ITEM);
-
-            Log.e(TAG,"chosenStore: " + chosenStore + "; chosenCategory: " + chosenCategory + "; chosenItems: " + chosenItems);
+        }
+        else if (requestCode == LOCATION && resultCode == RESULT_OK) {
+            // get data from extra needed to change city
+            newCityZMW = data.getStringExtra(ChangeLocationActivity.EXTRA_NEW_LOCATION_ZMW);
+            newCityName = data.getStringExtra(ChangeLocationActivity.EXTRA_NEW_LOCATION_CITYNAME);
+            isNewCity = true;
+            if (isNewCity) { // this if statement toggles whether forecast is pulled from user's own location, or the newly chosen location
+                // todo Create new forecast based on this new data
+            }
         }
     }
+
 /*
     @Override
     public void onConnected(Bundle bundle) {
@@ -185,15 +217,18 @@ public class WeatherClothingActivity extends ListActivity {
         // applications that do not require a fine-grained location and that do not need location
         // updates. Gets the best and most recent location currently available, which may be null
         // in rare cases when a location is not available.
+
+        buildGoogleApiClient();
+
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+        Log.e(TAG, mLastLocation.toString());
         if (mLastLocation != null) {
-            latitude = String.valueOf(mLastLocation.getLatitude());
-            longitude = String.valueOf(mLastLocation.getLongitude());
+
+            latitude = Double.toString(mLastLocation.getLatitude());
+            longitude = Double.toString(mLastLocation.getLongitude());
         } else {
             Toast.makeText(this, R.string.no_location_detected, Toast.LENGTH_LONG).show();
         }
-
-
 
     }
 
@@ -210,7 +245,16 @@ public class WeatherClothingActivity extends ListActivity {
         // Refer to the javadoc for ConnectionResult to see what error codes might be returned in
         // onConnectionFailed.
         Log.i(TAG, "Connection failed: ConnectionResult.getErrorCode() = " + connectionResult.getErrorCode());
-    }*/
+    }
+
+    protected synchronized void buildGoogleApiClient() {
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+    }
+
 }
 
 class MAAWebViewClient extends WebViewClient {
@@ -226,5 +270,5 @@ class MAAWebViewClient extends WebViewClient {
             Log.v(TAG, "NotInitializedException error");
         }
         return false;
-    }
+    }*/
 }

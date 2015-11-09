@@ -7,6 +7,10 @@
         android:title="Settings"
         android:onClick="openSettings"
     />
+    <item android:id="@+id/change_location"
+        android:title="Change Location"
+        android:onClick="openChangeLocation"
+        />
 
 
 
